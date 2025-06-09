@@ -298,6 +298,28 @@ export class PivotEngine<T extends Record<string, any>> {
   }
 
   /**
+   * Sets the row groups for the pivot table.
+   * @param {Group[]} rowGroups - The row groups to set.
+   * @public
+   */
+  public setRowGroups(rowGroups: any) {
+    this.state.rowGroups = rowGroups;
+    this.state.processedData = this.processData(this.state.data);
+    this.updateAggregates();
+  }
+
+  /**
+   * Sets the column groups for the pivot table.
+   * @param {Group[]} columnGroups - The column groups to set.
+   * @public
+   */
+  public setColumnGroups(columnGroups: any) {
+    this.state.columnGroups = columnGroups;
+    this.state.processedData = this.processData(this.state.data);
+    this.updateAggregates();
+  }
+
+  /**
    * Formats a value based on the specified field's format.
    * @param {any} value - The value to format.
    * @param {string} field - The field name to use for formatting.
@@ -453,6 +475,7 @@ export class PivotEngine<T extends Record<string, any>> {
    * @private
    */
   private applyGrouping(dataOverride?: T[]) {
+    console.log('Apply Grouping');
     if (!this.state.groupConfig) return;
 
     const { rowFields, columnFields, grouper } = this.state.groupConfig;
@@ -475,10 +498,15 @@ export class PivotEngine<T extends Record<string, any>> {
       this.state.sortConfig[0] || null,
       this.state.groupConfig
     );
+    console.log('Line 500 data', this.state.data);
+    console.log('Line 501 processed data', this.state.processedData);
 
     this.state.data = data;
     this.state.groups = groups;
     this.updateAggregates();
+    console.log('Line 506 data', this.state.data);
+    console.log('Line 507 processed data', this.state.processedData);
+
     this.state.processedData = this.processData(this.state.data);
   }
 
@@ -652,25 +680,37 @@ export class PivotEngine<T extends Record<string, any>> {
       return;
     }
 
+    console.log(
+      'Line 655 fromIndex',
+      fromIndex,
+      'toIndex',
+      toIndex,
+      'this.state.data.length',
+      this.state.data.length
+    );
     // Create new data array with reordered items
     const newData = [...this.state.data];
+    console.log('Line 658 new Data', newData);
     const [removed] = newData.splice(fromIndex, 1);
+    console.log('Line 660 removed', removed);
     newData.splice(toIndex, 0, removed);
-
+    console.log('Line 662 new Data', newData);
     // Update state
     this.state.data = newData;
-
+    console.log('Line 665 this.state.data', this.state.data);
     // Update row sizes while maintaining references
     const newRowSizes = [...this.state.rowSizes];
+    console.log('Line 668 newRowSize', newRowSizes);
     const [removedSize] = newRowSizes.splice(fromIndex, 1);
+    console.log('Line 670 removedSize', removedSize);
     newRowSizes.splice(toIndex, 0, removedSize);
-
+    console.log('Line 672 newRowSize', newRowSizes);
     // Update indices
     this.state.rowSizes = newRowSizes.map((size, index) => ({
       ...size,
       index,
     }));
-
+    console.log('Line 678 this.state.rowSizes', this.state.rowSizes);
     // If groups exist, update group order
     if (this.state.groups.length > 0) {
       const newGroups = [...this.state.groups];
@@ -678,7 +718,6 @@ export class PivotEngine<T extends Record<string, any>> {
       newGroups.splice(toIndex, 0, removedGroup);
       this.state.groups = newGroups;
     }
-
     // Refresh processed data and aggregates
     this.state.processedData = this.processData(this.state.data);
     this.updateAggregates();
@@ -695,6 +734,14 @@ export class PivotEngine<T extends Record<string, any>> {
    * @public
    */
   public dragColumn(fromIndex: number, toIndex: number): void {
+    console.log(
+      'Line 698 fromIndex',
+      fromIndex,
+      'toIndex',
+      toIndex,
+      'length',
+      this.state.columns.length
+    );
     // Validate indices
     if (
       !this.validateDragOperation(fromIndex, toIndex, this.state.columns.length)
@@ -776,6 +823,9 @@ export class PivotEngine<T extends Record<string, any>> {
    * @public
    */
   public applyFilters(filters: FilterConfig[]) {
+    console.log('Apply Filters');
+    console.log('Line 806 data', this.state.data);
+    console.log('Line 807 processed data', this.state.processedData);
     this.filterConfig = filters;
     this.refreshData();
   }
@@ -798,6 +848,7 @@ export class PivotEngine<T extends Record<string, any>> {
    * @private
    */
   private refreshData() {
+    console.log('Refresh Data');
     // Store original data
     const originalData = [...this.state.data];
     // Apply filters first
@@ -811,7 +862,8 @@ export class PivotEngine<T extends Record<string, any>> {
     filteredData = this.paginateData(filteredData);
     // Update state with filtered and paginated data
     this.state.processedData = this.processData(filteredData);
-
+    console.log('Line 843 data', this.state.data);
+    console.log('Line 844 processed data', this.state.processedData);
     if (this.state.groupConfig) {
       // Pass the filtered data to grouping instead of using config
       this.applyGrouping(filteredData);

@@ -30,24 +30,35 @@ interface EnhancedPivotEngine<T extends Record<string, any>>
   exportToPDF(fileName: string): void;
   exportToExcel(fileName: string): void;
   openPrintDialog(): void;
+  // Drag methods from core
+  dragRow(fromIndex: number, toIndex: number): void;
+  dragColumn(fromIndex: number, toIndex: number): void;
+  setRowGroups(rowGroups: any): void;
+  setColumnGroups(columnGroups: any): void;
+  toggleRowExpansion(rowId: string): void;
+  isRowExpanded(rowId: string): boolean;
 }
 
 /**
  * PivotHead Web Component
  *
  * A custom HTML element that wraps the PivotEngine to provide pivot table functionality
- * through HTML attributes and DOM events.
+ * through HTML attributes and DOM events with drag and drop support.
  *
  * Supported attributes:
  * - data: JSON string containing the table data
  * - options: JSON string containing pivot table configuration options
  * - filters: JSON string containing filter configurations
+ * - enable-drag-rows: Enable row drag and drop (boolean attribute)
+ * - enable-drag-columns: Enable column drag and drop (boolean attribute)
  *
  * Usage:
  * <pivot-head
  *   data='[{"name":"John","sales":100}]'
  *   options='{"rows":[{"uniqueName":"name"}]}'
- *   filters='[{"field":"sales","operator":"greaterThan","value":50}]'>
+ *   filters='[{"field":"sales","operator":"greaterThan","value":50}]'
+ *   enable-drag-rows
+ *   enable-drag-columns>
  * </pivot-head>
  */
 export class PivotHeadElement extends HTMLElement {
@@ -61,10 +72,11 @@ export class PivotHeadElement extends HTMLElement {
   private _data: any[] = [];
   private _options: any = {};
   private _filters: FilterConfig[] = [];
+  private _rowGroups: any[] = [];
+  private _columnGroups: any[] = [];
 
   /**
    * Define which attributes should trigger attributeChangedCallback
-   * Only the essential attributes for core functionality
    */
   static get observedAttributes() {
     return ['data', 'options', 'filters'];
@@ -76,7 +88,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Getter and setter for data property
-   * Allows programmatic access: element.data = [...]
    */
   set data(value: any[]) {
     this._data = value;
@@ -89,7 +100,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Getter and setter for options property
-   * Allows programmatic access: element.options = {...}
    */
   set options(value: any) {
     this._options = value;
@@ -102,7 +112,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Getter and setter for filters property
-   * Allows programmatic access: element.filters = [...]
    */
   set filters(value: FilterConfig[]) {
     this._filters = value;
@@ -119,12 +128,18 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Reinitializes the engine with current data and options
-   * Called whenever data or options change
    */
   private reinitialize() {
     if (this._data && this._options) {
+      // const config: PivotTableConfig<any> = {
+      //   data: this._data,
+      //   ...this._options,
+      // };
+
       const config: PivotTableConfig<any> = {
         data: this._data,
+        rowGroups: this._rowGroups,
+        columnGroups: this._columnGroups,
         ...this._options,
       };
 
@@ -141,10 +156,9 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Initialize the component when it's first connected to the DOM
-   * Parses attribute values and creates the engine instance
    */
   private initialize() {
-    // Parse data attribute if present and not already set programmatically
+    // Parse data attribute
     const rawData = this.getAttribute('data');
     if (rawData && !this._data.length) {
       try {
@@ -155,7 +169,7 @@ export class PivotHeadElement extends HTMLElement {
       }
     }
 
-    // Parse options attribute if present and not already set programmatically
+    // Parse options attribute
     const rawOptions = this.getAttribute('options');
     if (rawOptions && Object.keys(this._options).length === 0) {
       try {
@@ -166,7 +180,7 @@ export class PivotHeadElement extends HTMLElement {
       }
     }
 
-    // Parse filters attribute if present
+    // Parse filters attribute
     const rawFilters = this.getAttribute('filters');
     if (rawFilters) {
       try {
@@ -181,7 +195,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Initialize only when both required attributes are present
-   * Prevents partial initialization
    */
   private initializeWhenReady() {
     const dataAttr = this.getAttribute('data');
@@ -202,20 +215,17 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Called when observed attributes change
-   * Handles updates to data, options, and filters
    */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
-    // Only process if value actually changed
+    console.log('old value', oldValue, 'newValue', newValue);
     if (oldValue === newValue) return;
 
     switch (name) {
       case 'data':
       case 'options':
         if (!this.initialized) {
-          // Try to initialize if not yet initialized
           this.initializeWhenReady();
         } else {
-          // Update configuration if already initialized
           this.updateConfig();
         }
         break;
@@ -255,7 +265,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Updates filters when filters attribute changes
-   * @param filtersJson - JSON string containing filter configurations
    */
   private updateFilters(filtersJson: string) {
     if (!filtersJson) {
@@ -277,7 +286,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Dispatches a custom event with the current state
-   * This allows parent components to react to state changes
    */
   private notifyStateChange() {
     if (!this.engine) return;
@@ -297,7 +305,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Get the current state of the pivot table
-   * @returns Current pivot table state
    */
   public getState(): PivotTableState<any> {
     if (!this.engine) {
@@ -308,7 +315,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Reset the pivot table to its initial state
-   * Clears all filters and sorting
    */
   public refresh(): void {
     if (!this.engine) {
@@ -325,8 +331,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Sort the pivot table by a specific field
-   * @param field - Field name to sort by
-   * @param direction - Sort direction ('asc' or 'desc')
    */
   public sort(field: string, direction: 'asc' | 'desc'): void {
     if (!this.engine) {
@@ -340,7 +344,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Set measures for the pivot table
-   * @param measures - Array of measure configurations
    */
   public setMeasures(measures: MeasureConfig[]): void {
     if (!this.engine) {
@@ -354,7 +357,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Set dimensions for the pivot table
-   * @param dimensions - Array of dimension configurations
    */
   public setDimensions(dimensions: Dimension[]): void {
     if (!this.engine) {
@@ -368,7 +370,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Set grouping configuration
-   * @param groupConfig - Group configuration or null to disable grouping
    */
   public setGroupConfig(groupConfig: GroupConfig | null): void {
     if (!this.engine) {
@@ -382,7 +383,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Set aggregation type for measures
-   * @param type - Aggregation type (sum, avg, count, etc.)
    */
   public setAggregation(type: AggregationType): void {
     if (!this.engine) {
@@ -396,9 +396,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Format a value according to field formatting rules
-   * @param value - Value to format
-   * @param field - Field name for formatting context
-   * @returns Formatted value as string
    */
   public formatValue(value: any, field: string): string {
     if (!this.engine) {
@@ -411,7 +408,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Get grouped data from the pivot table
-   * @returns Array of grouped data
    */
   public getGroupedData(): Group[] {
     if (!this.engine) {
@@ -424,7 +420,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Get current filter state
-   * @returns Array of current filter configurations
    */
   public getFilters(): FilterConfig[] {
     return this._filters;
@@ -432,7 +427,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Get the raw data from the pivot table
-   * @returns Array of data objects
    */
   public getData(): any[] {
     if (!this.engine) {
@@ -445,7 +439,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Get the processed data (headers, rows, totals)
-   * @returns Processed data object
    */
   public getProcessedData(): any {
     if (!this.engine) {
@@ -460,7 +453,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Export pivot table to HTML format
-   * @param fileName - Name for the exported file (without extension)
    */
   public exportToHTML(fileName = 'pivot-table'): void {
     if (!this.engine) {
@@ -472,7 +464,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Export pivot table to PDF format
-   * @param fileName - Name for the exported file (without extension)
    */
   public exportToPDF(fileName = 'pivot-table'): void {
     if (!this.engine) {
@@ -484,7 +475,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Export pivot table to Excel format
-   * @param fileName - Name for the exported file (without extension)
    */
   public exportToExcel(fileName = 'pivot-table'): void {
     if (!this.engine) {
@@ -509,8 +499,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Load data from a file
-   * @param file - File object to load data from
-   * @returns Promise that resolves when data is loaded
    */
   public loadFromFile(file: File): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -531,8 +519,6 @@ export class PivotHeadElement extends HTMLElement {
 
   /**
    * Load data from a URL
-   * @param url - URL to fetch data from
-   * @returns Promise that resolves when data is loaded
    */
   public loadFromUrl(url: string): Promise<void> {
     return fetch(url)
@@ -545,6 +531,92 @@ export class PivotHeadElement extends HTMLElement {
       .then(data => {
         this.data = data;
       });
+  }
+
+  // Public drag API methods
+
+  /**
+   * Programmatically drag a row from one position to another
+   */
+  public dragRow(fromIndex: number, toIndex: number): void {
+    if (!this.engine) {
+      console.error('Engine not initialized');
+      return;
+    }
+    console.log('from Index', fromIndex, 'to Index', toIndex);
+    this.engine.dragRow(fromIndex, toIndex);
+    this.notifyStateChange();
+  }
+
+  /**
+   * Programmatically drag a column from one position to another
+   */
+  public dragColumn(fromIndex: number, toIndex: number): void {
+    if (!this.engine) {
+      console.error('Engine not initialized');
+      return;
+    }
+
+    this.engine.dragColumn(fromIndex, toIndex);
+    this.notifyStateChange();
+  }
+
+  /**
+   * Set row groups for the pivot table
+   */
+  public setRowGroups(rowGroups: any[]): void {
+    this._rowGroups = rowGroups;
+
+    // Also update the engine if it's initialized
+    if (this.engine && typeof this.engine.setRowGroups === 'function') {
+      this.engine.setRowGroups(rowGroups);
+      this.notifyStateChange();
+    } else {
+      // If engine not ready, reinitialize with new row groups
+      this.reinitialize();
+    }
+  }
+
+  /**
+   * Set column groups for the pivot table
+   */
+  public setColumnGroups(columnGroups: any[]): void {
+    this._columnGroups = columnGroups;
+
+    // Also update the engine if it's initialized
+    if (this.engine && typeof this.engine.setColumnGroups === 'function') {
+      this.engine.setColumnGroups(columnGroups);
+      this.notifyStateChange();
+    } else {
+      // If engine not ready, reinitialize with new column groups
+      this.reinitialize();
+    }
+  }
+
+  /**
+   * Toggles the expansion state of a row via the engine.
+   * @param rowId - The unique ID of the row to toggle.
+   */
+  public toggleRowExpansion(rowId: string): void {
+    if (!this.engine || typeof this.engine.toggleRowExpansion !== 'function') {
+      console.error('Engine not initialized or method not available');
+      return;
+    }
+    this.engine.toggleRowExpansion(rowId);
+    this.notifyStateChange();
+  }
+
+  /**
+   * Checks if a row is expanded via the engine.
+   * @param rowId - The unique ID of the row.
+   * @returns boolean indicating whether the row is expanded.
+   */
+  public isRowExpanded(rowId: string): boolean {
+    if (!this.engine || typeof this.engine.isRowExpanded !== 'function') {
+      console.error('Engine not initialized or method not available');
+      return false;
+    }
+    return this.engine.isRowExpanded(rowId);
   }
 }
 

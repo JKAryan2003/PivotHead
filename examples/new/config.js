@@ -1,5 +1,4 @@
-// Sample data for the pivot table
-export const sampleData = [
+export const originalData = [
   {
     date: '2024-01-01',
     product: 'Widget A',
@@ -9,21 +8,21 @@ export const sampleData = [
   },
   {
     date: '2024-01-02',
-    product: 'Widget A',
+    product: 'Widget B',
     region: 'South',
     sales: 1500,
     quantity: 75,
   },
   {
     date: '2024-01-03',
-    product: 'Widget B',
+    product: 'Widget C',
     region: 'East',
     sales: 900,
     quantity: 45,
   },
   {
     date: '2024-01-04',
-    product: 'Widget C',
+    product: 'Widget D',
     region: 'West',
     sales: 2000,
     quantity: 80,
@@ -142,9 +141,7 @@ export const sampleData = [
   },
 ];
 
-// Pivot table configuration
-export const config = {
-  data: sampleData,
+export const options = {
   rows: [{ uniqueName: 'product', caption: 'Product' }],
   columns: [{ uniqueName: 'region', caption: 'Region' }],
   measures: [
@@ -158,7 +155,6 @@ export const config = {
         locale: 'en-US',
         decimals: 2,
       },
-      sortable: true,
     },
     {
       uniqueName: 'quantity',
@@ -166,44 +162,20 @@ export const config = {
       aggregation: 'sum',
       format: {
         type: 'number',
-        decimals: 0,
-        locale: 'en-US',
-      },
-      sortable: false,
-    },
-    {
-      uniqueName: 'averageSale',
-      caption: 'Average Sale',
-      aggregation: 'avg',
-      format: {
-        type: 'currency',
-        currency: 'USD',
-        locale: 'en-US',
         decimals: 2,
+        locale: 'en-US',
       },
-      formula: item => item.sales / item.quantity,
-      sortable: true,
     },
   ],
   dimensions: [
-    { field: 'product', label: 'Product', type: 'string', sortable: true },
-    { field: 'region', label: 'Region', type: 'string', sortable: false },
-    { field: 'date', label: 'Date', type: 'date', sortable: true },
-    { field: 'sales', label: 'Sales', type: 'number', sortable: true },
-    { field: 'quantity', label: 'Quantity', type: 'number', sortable: false },
+    { field: 'product', label: 'Product', type: 'string' },
+    { field: 'region', label: 'Region', type: 'string' },
+    { field: 'date', label: 'Date', type: 'date' },
+    { field: 'sales', label: 'Sales', type: 'number' },
+    { field: 'quantity', label: 'Quantity', type: 'number' },
   ],
   defaultAggregation: 'sum',
   isResponsive: true,
-  toolbar: true,
-  // Add initial sort configuration
-  initialSort: [
-    {
-      field: 'sales',
-      direction: 'desc',
-      type: 'measure',
-      aggregation: 'sum',
-    },
-  ],
   groupConfig: {
     rowFields: ['product'],
     columnFields: ['region'],
@@ -218,46 +190,10 @@ export const config = {
     },
     quantity: {
       type: 'number',
-      decimals: 0,
-      locale: 'en-US',
-    },
-    averageSale: {
-      type: 'currency',
-      currency: 'USD',
-      locale: 'en-US',
       decimals: 2,
+      locale: 'en-US',
     },
   },
-  conditionalFormatting: [
-    {
-      value: {
-        type: 'Number',
-        operator: 'Greater than',
-        value1: '1000',
-        value2: '',
-      },
-      format: {
-        font: 'Arial',
-        size: '14px',
-        color: '#ffffff',
-        backgroundColor: '#4CAF50',
-      },
-    },
-    {
-      value: {
-        type: 'Number',
-        operator: 'Less than',
-        value1: '500',
-        value2: '',
-      },
-      format: {
-        font: 'Arial',
-        size: '14px',
-        color: '#ffffff',
-        backgroundColor: '#F44336',
-      },
-    },
-  ],
   onRowDragEnd: (fromIndex, toIndex, newData) => {
     console.log('Row dragged:', { fromIndex, toIndex, newData });
   },

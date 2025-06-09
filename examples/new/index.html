@@ -107,11 +107,28 @@
   <!-- Basic Operations -->
   <div class="section-title">Basic Operations:</div>
   <div class="controls">
-    <button onclick="handleSort()">Sort by Sales (DESC)</button>
-    <button onclick="handleFilter()">Filter Widget A</button>
     <button onclick="handleReset()">Reset Table</button>
-    <button onclick="toggleToolbar()">Toggle Toolbar</button>
-    <button onclick="toggleResponsive()">Toggle Responsive</button>
+  </div>
+
+  <!-- Filter Operations -->
+  <div>
+    <select id="filterField">
+        <option value="product">Product</option>
+        <option value="region">Region</option>
+        <option value="sales">Sales</option>
+        <option value="quantity">Quantity</option>
+        <option value="date">Date</option>
+    </select>
+
+    <select id="filterOperator">
+        <option value="equals">Equals</option>
+        <option value="contains">Contains</option>
+        <option value="greaterThan">Greater Than</option>
+        <option value="lessThan">Less Than</option>
+    </select>
+
+    <input type="text" id="filterValue" placeholder="Filter value">
+    <button onclick="handleFilter()">Filter</button>
   </div>
 
   <!-- Measures & Dimensions -->
@@ -144,29 +161,6 @@
     </div>
   </div>
 
-  <!-- Row Operations -->
-  <div class="section-title">Row Operations:</div>
-  <div class="controls">
-    <button onclick="expandAllRows()">Expand All Rows</button>
-    <button onclick="collapseAllRows()">Collapse All Rows</button>
-    <button onclick="toggleRowExpansion()">Toggle Row 0</button>
-    <div class="control-group">
-      <input type="number" id="rowHeight" placeholder="Height" value="40" min="20" max="100">
-      <button onclick="resizeRow()">Resize Row 0</button>
-    </div>
-  </div>
-
-  <!-- Column Operations -->
-  <div class="section-title">Column Operations:</div>
-  <div class="controls">
-    <div class="control-group">
-      <input type="text" id="columnName" placeholder="Column name" value="product">
-      <input type="number" id="columnWidth" placeholder="Width" value="150" min="50" max="300">
-      <button onclick="setColumnWidth()">Set Column Width</button>
-    </div>
-    <button onclick="dragColumns()">Drag Column (0→1)</button>
-  </div>
-
   <!-- Pagination -->
   <div class="section-title">Pagination:</div>
   <div class="controls">
@@ -178,15 +172,6 @@
   </div>
 
   <!-- Data Operations -->
-  <div class="section-title">Data Operations:</div>
-  <div class="controls">
-    <button onclick="loadSampleData()">Load Sample Data</button>
-    <button onclick="addRandomData()">Add Random Data</button>
-    <div class="file-input">
-      <input type="file" id="fileInput" accept=".json">
-      <button onclick="loadFromFile()">Load from File</button>
-    </div>
-  </div>
 
   <!-- Export Operations -->
   <div class="section-title">Export:</div>
@@ -197,11 +182,15 @@
     <button onclick="handlePrint()">Print</button>
   </div>
 
-  <pivot-head id="pivotTable"></pivot-head>
-
+  <!-- <pivot-head id="pivotTable"></pivot-head> -->
+  <pivot-head 
+    id="pivotTable" 
+    enable-drag-rows 
+    enable-drag-columns>
+  </pivot-head>
   <div id="customView">
     <h2>Pivot Table</h2>
-    <div id="customTable"></div>
+    <div id="myTable"></div>
   </div>
 
   <div class="debug-view">
