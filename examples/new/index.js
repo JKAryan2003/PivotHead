@@ -10,22 +10,63 @@ let dynamicConfig = {
   responsive: true,
 };
 
-const pivotTable = document.getElementById('pivotTable');
-pivotTable.data = originalData;
-pivotTable.options = options;
-
-pivotTable.addEventListener('stateChange', e => {
-  const state = e.detail;
-  renderTable(state);
-  updateDebugView(state);
-});
+let pivotTable;
 
 // Initialize
-customElements.whenDefined('pivot-head').then(() => {
-  const state = pivotTable.getState();
-  renderTable(state);
+window.addEventListener('DOMContentLoaded', () => {
+  customElements.whenDefined('pivot-head').then(() => {
+    pivotTable = document.getElementById('pivotTable');
 
-  console.log('Pivot table drag functionality initialized');
+    pivotTable.data = originalData;
+    pivotTable.options = options;
+
+    pivotTable.addEventListener('stateChange', e => {
+      const state = e.detail;
+      renderTable(state);
+      updateDebugView(state);
+      updatePaginationInfo();
+    });
+
+    pivotTable.pagination = {
+      currentPage: 1,
+      pageSize: 30,
+    };
+
+    // Set row groups (products) with proper Group structure
+    const productGroups = [
+      ...new Set(originalData.map(item => item.product)),
+    ].map(product => {
+      const productItems = originalData.filter(
+        item => item.product === product
+      );
+      return {
+        key: product,
+        items: productItems,
+        aggregates: {}, // Empty aggregates object
+        level: 0,
+      };
+    });
+    pivotTable.setRowGroups(productGroups);
+
+    // Set column groups (regions) with proper Group structure
+    const regionGroups = [
+      ...new Set(originalData.map(item => item.region)),
+    ].map(region => {
+      const regionItems = originalData.filter(item => item.region === region);
+      return {
+        key: region,
+        items: regionItems,
+        aggregates: {}, // Empty aggregates object
+        level: 0,
+      };
+    });
+    pivotTable.setColumnGroups(regionGroups);
+
+    const state = pivotTable.getState();
+    renderTable(state);
+
+    setupPaginationControls();
+  });
 });
 
 //Refresh Data
@@ -42,27 +83,6 @@ window.handleFilter = () => {
   const filters = [{ field: field, operator: operator, value: value }];
   pivotTable.filters = filters;
 };
-
-// Add drag event listeners
-pivotTable.addEventListener('dragStart', e => {
-  console.log('Drag started:', e.detail);
-});
-
-pivotTable.addEventListener('dragEnd', e => {
-  console.log('Drag ended:', e.detail);
-});
-
-pivotTable.addEventListener('rowDragEnd', e => {
-  console.log('Row drag completed:', e.detail);
-  const { fromIndex, toIndex, newData } = e.detail;
-  console.log(`Row moved from ${fromIndex} to ${toIndex}`);
-});
-
-pivotTable.addEventListener('columnDragEnd', e => {
-  console.log('Column drag completed:', e.detail);
-  const { fromIndex, toIndex, newColumns } = e.detail;
-  console.log(`Column moved from ${fromIndex} to ${toIndex}`);
-});
 
 // Basic Operations
 window.handleSort = () => {
@@ -135,9 +155,6 @@ function renderTable(state) {
       return;
     }
 
-    console.log('Processed Data Headers:', state.processedData.headers);
-    console.log('Processed Data Rows:', state.processedData.rows);
-
     const tableContainer = document.getElementById('myTable');
 
     // Clear previous content
@@ -165,22 +182,26 @@ function renderTable(state) {
     cornerCell.textContent = 'Product / Region';
     regionHeaderRow.appendChild(cornerCell);
 
-    // Get unique regions
-    const uniqueRegions = [...new Set(state.data.map(item => item.region))];
+    // Get regions from column groups (set via setColumnGroups)
+    const uniqueRegions =
+      state.columnGroups && state.columnGroups.length > 0
+        ? state.columnGroups.map(
+            group => group.key || group.name || group.value
+          )
+        : [...new Set(state.data.map(item => item.region))]; // fallback
 
     // Add region headers with colspan for measures
     uniqueRegions.forEach((region, index) => {
       const th = document.createElement('th');
       th.textContent = region;
-      th.colSpan = state.selectedMeasures.length; // Span across all measures
+      th.colSpan = state.selectedMeasures.length;
       th.style.padding = '12px';
       th.style.backgroundColor = '#f8f9fa';
       th.style.borderBottom = '2px solid #dee2e6';
       th.style.borderRight = '1px solid #dee2e6';
       th.style.textAlign = 'center';
-      th.dataset.index = index + 1; // +1 because first cell is corner
+      th.dataset.index = index + 1;
 
-      // Make headers draggable
       th.setAttribute('draggable', 'true');
       th.style.cursor = 'move';
 
@@ -203,7 +224,6 @@ function renderTable(state) {
     productHeader.style.borderRight = '1px solid #dee2e6';
     productHeader.style.cursor = 'pointer';
 
-    // Create a container for the header content to align text and icon
     const productHeaderContent = document.createElement('div');
     productHeaderContent.style.display = 'flex';
     productHeaderContent.style.alignItems = 'center';
@@ -212,13 +232,11 @@ function renderTable(state) {
     productText.textContent = 'Product';
     productHeaderContent.appendChild(productText);
 
-    // Add sort icon for product
     const productSortIcon = createSortIcon('product', currentSortConfig);
     productHeaderContent.appendChild(productSortIcon);
 
     productHeader.appendChild(productHeaderContent);
 
-    // Add sort functionality to product header
     productHeader.addEventListener('click', () => {
       const direction =
         currentSortConfig?.field === 'product' &&
@@ -226,7 +244,7 @@ function renderTable(state) {
           ? 'desc'
           : 'asc';
       pivotTable.sort('product', direction);
-      renderTable();
+      renderTable(pivotTable.getState());
     });
 
     measureHeaderRow.appendChild(productHeader);
@@ -241,7 +259,6 @@ function renderTable(state) {
         th.style.borderRight = '1px solid #dee2e6';
         th.style.cursor = 'pointer';
 
-        // Create a container for the header content to align text and icon
         const headerContent = document.createElement('div');
         headerContent.style.display = 'flex';
         headerContent.style.alignItems = 'center';
@@ -251,13 +268,11 @@ function renderTable(state) {
         measureText.textContent = measure.caption;
         headerContent.appendChild(measureText);
 
-        // Add sort icon for measure
         const sortIcon = createSortIcon(measure.uniqueName, currentSortConfig);
         headerContent.appendChild(sortIcon);
 
         th.appendChild(headerContent);
 
-        // Add sort functionality
         th.addEventListener('click', () => {
           const direction =
             currentSortConfig?.field === measure.uniqueName &&
@@ -265,7 +280,7 @@ function renderTable(state) {
               ? 'desc'
               : 'asc';
           pivotTable.sort(measure.uniqueName, direction);
-          renderTable();
+          renderTable(pivotTable.getState());
         });
 
         measureHeaderRow.appendChild(th);
@@ -278,8 +293,12 @@ function renderTable(state) {
     // Create table body
     const tbody = document.createElement('tbody');
 
-    // Get unique products
-    const uniqueProducts = [...new Set(state.data.map(item => item.product))];
+    // Get unique products from current paginated data
+    // Get products from row groups (set via setRowGroups)
+    const uniqueProducts =
+      state.rowGroups && state.rowGroups.length > 0
+        ? state.rowGroups.map(group => group.key || group.name || group.value)
+        : [...new Set(state.data.map(item => item.product))]; // fallback
 
     // Add rows for each product
     uniqueProducts.forEach((product, rowIndex) => {
@@ -323,12 +342,10 @@ function renderTable(state) {
 
       // Add data cells for each region and measure
       uniqueRegions.forEach(region => {
-        // Filter data for this product and region
         const filteredData = state.data.filter(
           item => item.product === product && item.region === region
         );
 
-        // Add cells for each measure
         state.selectedMeasures.forEach(measure => {
           const td = document.createElement('td');
           td.style.padding = '8px';
@@ -336,7 +353,6 @@ function renderTable(state) {
           td.style.borderRight = '1px solid #dee2e6';
           td.style.textAlign = 'right';
 
-          // Calculate the value based on aggregation
           let value = 0;
           if (filteredData.length > 0) {
             switch (measure.aggregation) {
@@ -348,7 +364,6 @@ function renderTable(state) {
                 break;
               case 'avg':
                 if (measure.formula) {
-                  // Use formula if provided
                   value =
                     filteredData.reduce(
                       (sum, item) => sum + measure.formula(item),
@@ -377,7 +392,6 @@ function renderTable(state) {
             }
           }
 
-          // Format the value
           let formattedValue = value;
           if (measure.format) {
             if (measure.format.type === 'currency') {
@@ -397,7 +411,6 @@ function renderTable(state) {
 
           td.textContent = formattedValue;
 
-          // Apply conditional formatting
           if (
             options.conditionalFormatting &&
             Array.isArray(options.conditionalFormatting)
@@ -444,27 +457,72 @@ function renderTable(state) {
     table.appendChild(tbody);
     tableContainer.appendChild(table);
 
-    // Update pagination info
-    // const paginationState = pivotTable.getPaginationState();
-    const pageInfo = document.getElementById('pageInfo');
-    if (pageInfo) {
-      pageInfo.textContent = `Page ${paginationState.currentPage} of ${paginationState.totalPages}`;
-
-      // Update button states
-      document.getElementById('prevPage').disabled =
-        paginationState.currentPage <= 1;
-      document.getElementById('nextPage').disabled =
-        paginationState.currentPage >= paginationState.totalPages;
-    }
+    // Update pagination info with current state
 
     // Set up drag and drop after rendering
     setupDragAndDrop(state);
   } catch (error) {
     console.error('Error rendering table:', error);
 
-    // Display error message to user
     const tableContainer = document.getElementById('myTable');
     tableContainer.innerHTML = `<div style="color: red; padding: 20px;">Error rendering table: ${error.message}</div>`;
+  }
+}
+
+function setupPaginationControls() {
+  const pageSizeSelect = document.getElementById('paginationField');
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+
+  if (!pageSizeSelect || !prevBtn || !nextBtn) {
+    console.error('Pagination controls not found in DOM.');
+    return;
+  }
+
+  // Page size change
+  pageSizeSelect.addEventListener('change', () => {
+    const newSize = parseInt(pageSizeSelect.value);
+    const pagination = pivotTable.getPagination();
+    pivotTable.setPagination({
+      currentPage: 1,
+      pageSize: newSize,
+    });
+    renderTable(pivotTable.getState());
+  });
+
+  // Previous Page
+  prevBtn.addEventListener('click', () => {
+    const pagination = pivotTable.getPagination();
+    if (pagination.currentPage > 1) {
+      pivotTable.setPagination({
+        ...pagination,
+        currentPage: pagination.currentPage - 1,
+      });
+      renderTable(pivotTable.getState());
+    }
+  });
+
+  // Next Page
+  nextBtn.addEventListener('click', () => {
+    const pagination = pivotTable.getPagination();
+    const totalItems = pivotTable.getState().data.length;
+    const totalPages = Math.ceil(totalItems / pagination.pageSize);
+
+    if (pagination.currentPage < totalPages) {
+      pivotTable.setPagination({
+        ...pagination,
+        currentPage: pagination.currentPage + 1,
+      });
+      renderTable(pivotTable.getState());
+    }
+  });
+}
+
+function updatePaginationInfo() {
+  const pagination = pivotTable.getPaginationState();
+  const info = document.getElementById('paginationInfo');
+  if (info) {
+    info.textContent = `Page ${pagination.currentPage} of ${pagination.totalPages}`;
   }
 }
 

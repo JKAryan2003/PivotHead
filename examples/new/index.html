@@ -161,15 +161,6 @@
     </div>
   </div>
 
-  <!-- Pagination -->
-  <div class="section-title">Pagination:</div>
-  <div class="controls">
-    <div class="control-group">
-      <input type="number" id="pageSize" placeholder="Page size" value="5" min="1" max="20">
-      <input type="number" id="currentPage" placeholder="Page" value="1" min="1">
-      <button onclick="setPagination()">Set Pagination</button>
-    </div>
-  </div>
 
   <!-- Data Operations -->
 
@@ -193,6 +184,20 @@
     <div id="myTable"></div>
   </div>
 
+  <!-- Pagination Controls -->
+   <div>
+    <select name="" id="paginationField">
+      <option value="2">2</option>
+      <option value="4">4</option>
+      <option value="6">6</option>
+      <option value="8">8</option>
+      <option value="10">10</option>
+    </select>
+
+    <button id="prevPageBtn" >Previous Page</button>
+    <button id="nextPageBtn" >Next Page</button> 
+    <div id="paginationInfo"></div>
+   </div>
   <div class="debug-view">
     <h3>Current State:</h3>
     <pre id="stateDebug"></pre>
