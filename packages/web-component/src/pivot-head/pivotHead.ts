@@ -128,7 +128,6 @@ export class PivotHeadElement extends HTMLElement {
     // Check if we have the minimum required data
     const hasData = this._data && this._data.length > 0;
     const hasOptions = this._options && Object.keys(this._options).length > 0;
-    console.log('has Data', hasData, 'hasOptions', hasOptions);
     if (!hasData || !hasOptions) {
       return;
     }
@@ -141,7 +140,6 @@ export class PivotHeadElement extends HTMLElement {
         ...this._options,
       };
 
-      console.log('config', config);
       // Create or recreate the engine
       this.engine = new PivotEngine(config) as EnhancedPivotEngine<any>;
 
@@ -170,7 +168,6 @@ export class PivotHeadElement extends HTMLElement {
   private parseAttributesIfNeeded(): void {
     // Parse data attribute
     const rawData = this.getAttribute('data');
-    console.log('rawData', rawData);
     if (rawData && !this._data.length) {
       try {
         this.data = JSON.parse(rawData); // Use setter
@@ -181,7 +178,6 @@ export class PivotHeadElement extends HTMLElement {
 
     // Parse options attribute
     const rawOptions = this.getAttribute('options');
-    console.log('rawOptions', rawOptions);
     if (rawOptions && !Object.keys(this._options).length) {
       try {
         this.options = JSON.parse(rawOptions); // Use setter
@@ -207,7 +203,6 @@ export class PivotHeadElement extends HTMLElement {
 
     // Parse pagination
     const rawPagination = this.getAttribute('pagination');
-    console.log('rawPagination', rawPagination);
     if (rawPagination) {
       try {
         this.pagination = { ...this._pagination, ...JSON.parse(rawPagination) };
@@ -543,7 +538,6 @@ export class PivotHeadElement extends HTMLElement {
       console.error('Engine not initialized');
       return;
     }
-    console.log('from Index', fromIndex, 'to Index', toIndex);
     this.engine.dragRow(fromIndex, toIndex);
     this.notifyStateChange();
   }
@@ -693,6 +687,20 @@ export class PivotHeadElement extends HTMLElement {
       pageSize,
       currentPage: 1, // Reset to first page when changing page size
     });
+  }
+
+  /**
+   * Sets the formatting for a specific field and re-initializes the engine.
+   * @param {string} field - The uniqueName of the field to format (e.g., 'sales').
+   * @param {object} format - The new format object.
+   */
+  public setFormatting(field: string, format: any): void {
+    if (!this._options.formatting) {
+      this._options.formatting = {};
+    }
+
+    this._options.formatting[field] = format;
+    this.reinitialize();
   }
 
   /**

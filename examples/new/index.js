@@ -670,3 +670,29 @@ function updateDebugView(state) {
   };
   debugElement.textContent = JSON.stringify(debugInfo, null, 2);
 }
+
+window.openModal = function (id) {
+  document.getElementById(id).style.display = 'flex';
+};
+
+window.closeModal = function (id) {
+  document.getElementById(id).style.display = 'none';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Hook up cancel button
+  document.querySelectorAll('.cancel-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.closest('.modal').style.display = 'none';
+    });
+  });
+
+  // Close modal on background click
+  window.addEventListener('click', e => {
+    document.querySelectorAll('.modal').forEach(modal => {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+      }
+    });
+  });
+});

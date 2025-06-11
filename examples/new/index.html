@@ -98,29 +98,130 @@
       font-weight: bold;
       color: #333;
     }
-
-
   </style>
-  <script type="module" src="index.js"></script>
 </head>
 
 <body>
   <h1>Enhanced Pivot Table Demo</h1>
   <div class="dropdown-container">
     <button class="main-button">
-      <span class="icon">🖉</span><br />
+      <span class="icon">🖉</span>
       Format
     </button>
-
     <div class="dropdown-menu">
-      <button class="dropdown-item" id="formatCellsBtn">
+      <button class="dropdown-item" onclick="openModal('modal1')">
         <span class="icon">💲</span> Format cells
       </button>
-      <button class="dropdown-item" id="conditionalBtn">
-        <span class="icon">🔢</span> Conditional formatting
+      <button class="dropdown-item" onclick="openModal('modal2')">
+        <span class="icon">✏️</span> Conditional formatting
       </button>
     </div>
   </div>
+
+  <!-- Format Cells Modal -->
+ <div id="modal1" class="modal">
+  <div class="modal-content">
+    <h2>Format cells</h2>
+
+    <!-- Field selector -->
+    <div class="form-group">
+      <label>Choose Field</label>
+      <select id="field-select">
+        <option value="sales">Sales</option>
+        <option value="quantity">Quantity</option>
+        <option value="date">Date</option>
+      </select>
+    </div>
+
+    <!-- Format type -->
+    <div class="form-group">
+      <label>Format Type</label>
+      <select id="format-type">
+        <option value="number">Number</option>
+        <option value="currency">Currency</option>
+        <option value="percentage">Percentage</option>
+        <option value="date">Date</option>
+      </select>
+    </div>
+
+    <!-- Decimal places -->
+    <div class="form-group">
+      <label>Decimal Places</label>
+      <select id="decimal-places">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2" selected>2</option>
+        <option value="3">3</option>
+      </select>
+    </div>
+
+    <!-- Currency symbol -->
+    <div class="form-group" id="currency-symbol-group">
+      <label>Currency Symbol (ISO Code)</label>
+      <input type="text" id="currency-code" placeholder="USD" />
+    </div>
+
+    <!-- Locale -->
+    <div class="form-group">
+      <label>Locale</label>
+      <input type="text" id="locale-input" placeholder="en-US" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="apply-btn" onclick="applyFormatting()">APPLY</button>
+      <button class="cancel-btn" onclick="closeModal('modal1')">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+
+  <div id="modal2" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal('modal2')">&times;</span>
+      <h3>Conditional Formatting</h3>
+      <div style="border-top: 1px solid #ccc; margin-top: 10px; padding-top: 15px;">
+
+        <div style="margin-bottom: 10px;">
+          <label><strong>Value:</strong></label><br />
+          <select>
+            <option>All values</option>
+            <option>Specific column</option>
+            <option>Specific row</option>
+          </select>
+          <select>
+            <option>Greater than</option>
+            <option>Less than</option>
+            <option>Equal to</option>
+            <option>Not equal to</option>
+          </select>
+          <input type="number" placeholder="Enter value" />
+        </div>
+
+        <div style="margin-bottom: 10px;">
+          <label><strong>Format:</strong></label><br />
+          <select>
+            <option>Arial</option>
+            <option>Verdana</option>
+            <option>Times New Roman</option>
+          </select>
+          <select>
+            <option>10px</option>
+            <option>12px</option>
+            <option>14px</option>
+            <option>16px</option>
+          </select>
+          <input type="text" placeholder="Custom text (optional)" />
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+          <button onclick="applyFormatting()">Apply</button>
+          <button onclick="closeModal('modal2')">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
 
   <!-- Basic Operations -->
   <div class="section-title">Basic Operations:</div>
@@ -131,18 +232,18 @@
   <!-- Filter Operations -->
   <div>
     <select id="filterField">
-        <option value="product">Product</option>
-        <option value="region">Region</option>
-        <option value="sales">Sales</option>
-        <option value="quantity">Quantity</option>
-        <option value="date">Date</option>
+      <option value="product">Product</option>
+      <option value="region">Region</option>
+      <option value="sales">Sales</option>
+      <option value="quantity">Quantity</option>
+      <option value="date">Date</option>
     </select>
 
     <select id="filterOperator">
-        <option value="equals">Equals</option>
-        <option value="contains">Contains</option>
-        <option value="greaterThan">Greater Than</option>
-        <option value="lessThan">Less Than</option>
+      <option value="equals">Equals</option>
+      <option value="contains">Contains</option>
+      <option value="greaterThan">Greater Than</option>
+      <option value="lessThan">Less Than</option>
     </select>
 
     <input type="text" id="filterValue" placeholder="Filter value">
@@ -192,10 +293,7 @@
   </div>
 
   <!-- <pivot-head id="pivotTable"></pivot-head> -->
-  <pivot-head 
-    id="pivotTable" 
-    enable-drag-rows 
-    enable-drag-columns>
+  <pivot-head id="pivotTable" enable-drag-rows enable-drag-columns>
   </pivot-head>
   <div id="customView">
     <h2>Pivot Table</h2>
@@ -203,7 +301,7 @@
   </div>
 
   <!-- Pagination Controls -->
-   <div>
+  <div>
     <select name="" id="paginationField">
       <option value="2">2</option>
       <option value="4">4</option>
@@ -212,15 +310,15 @@
       <option value="10">10</option>
     </select>
 
-    <button id="prevPageBtn" >Previous Page</button>
-    <button id="nextPageBtn" >Next Page</button> 
+    <button id="prevPageBtn">Previous Page</button>
+    <button id="nextPageBtn">Next Page</button>
     <div id="paginationInfo"></div>
-   </div>
+  </div>
   <div class="debug-view">
     <h3>Current State:</h3>
     <pre id="stateDebug"></pre>
   </div>
-
+  <script type="module" src="index.js"></script>
 </body>
 
 </html>
