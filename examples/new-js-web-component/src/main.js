@@ -13,12 +13,9 @@ window.addEventListener('DOMContentLoaded', () => {
       console.error('Could not find the <pivot-head> element!');
       return;
     }
-    console.log('Found pivot element:', pivot);
 
-    console.log('Setting options...', options);
     pivot.data = originalData;
 
-    console.log('Setting options...', options);
     pivot.options = options;
 
     pivot.addEventListener('stateChange', e => {
@@ -28,6 +25,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
 
     setRowColumnGroups();
+    populateFieldsModalStructure();
   });
 });
 
@@ -53,196 +51,8 @@ function setRowColumnGroups() {
   pivot.setColumnGroups(regionGroups);
 }
 
-//render Table
-// function renderTable(state) {
-//   if (!state || !state.processedData || !state.rows || !state.columns) {
-//     console.error("State object is incomplete or invalid.");
-//     return;
-//   }
-
-//   const tableContainer = document.getElementById("myTable");
-//   tableContainer.innerHTML = "";
-
-//   const rowDimension = state.rows[0];
-//   const colDimension = state.columns[0];
-//   const measures = state.measures;
-//   const rowGroups = state.rowGroups;
-//   const columnGroups = state.columnGroups;
-//   const grandTotals = state.processedData.totals;
-//   const formattingRules = state.formatting;
-
-//   // const formatValue = (value, measureUniqueName) => {
-//   //   if (value === null || value === undefined) return "";
-//   //   const rule = state.formatting[measureUniqueName];
-//   //   if (!rule) return value.toLocaleString();
-
-//   //   try {
-//   //     // --- ⬇️ FINAL CORRECTED LOGIC ⬇️ ---
-//   //     const options = {
-//   //       minimumFractionDigits: rule.decimals,
-//   //       maximumFractionDigits: rule.decimals,
-//   //     };
-
-//   //     // Map your custom type to the valid Intl.NumberFormat style
-//   //     if (rule.type === 'currency') {
-//   //       options.style = 'currency';
-//   //       options.currency = rule.currency || 'USD';
-//   //     } else if (rule.type === 'percentage') {
-//   //       options.style = 'percent';
-//   //     } else {
-//   //       // Default to a plain number format
-//   //       options.style = 'decimal';
-//   //     }
-
-//   //     return new Intl.NumberFormat(rule.locale || 'en-US', options).format(value);
-
-//   //   } catch (e) {
-//   //     console.error(`Error formatting value for ${measureUniqueName}:`, e);
-//   //     return value.toLocaleString(); // Fallback to a simple string
-//   //   }
-//   // };
-
-//   const dataMap = new Map(state.groups.map((g) => [g.key, g.aggregates]));
-
-//   const table = document.createElement("table");
-//   table.className = "pivot-table";
-//   const thead = table.createTHead();
-//   const tbody = table.createTBody();
-//   const tfoot = table.createTFoot();
-
-//   const headerRow1 = thead.insertRow();
-//   const headerRow2 = thead.insertRow();
-//   const cornerCell = document.createElement("th");
-//   cornerCell.textContent = `${rowDimension.caption} / ${colDimension.caption}`;
-//   headerRow1.appendChild(cornerCell);
-
-//   // Build Column Headers and make them draggable
-//   columnGroups.forEach((cGroup, index) => {
-//     const th = document.createElement("th");
-//     th.textContent = cGroup.key;
-//     th.colSpan = measures.length;
-//     // ✅ MAKE THE COLUMN HEADER DRAGGABLE AND ADD INDEX
-//     th.draggable = true;
-//     th.dataset.columnIndex = index;
-//     headerRow1.appendChild(th);
-//   });
-
-//   const grandTotalHeader1 = document.createElement("th");
-//   grandTotalHeader1.textContent = "Grand Total";
-//   grandTotalHeader1.colSpan = measures.length;
-//   headerRow1.appendChild(grandTotalHeader1);
-
-//   const cornerCell2 = document.createElement("th");
-//   headerRow2.appendChild(cornerCell2);
-
-//   const addMeasureHeaders = () => {
-//     measures.forEach((measure) => {
-//       const th = document.createElement("th");
-//       th.textContent = measure.caption;
-//       headerRow2.appendChild(th);
-//     });
-//   };
-//   columnGroups.forEach(addMeasureHeaders);
-//   addMeasureHeaders();
-
-//   // Build Table Body rows and make them draggable
-//   rowGroups.forEach((rGroup, index) => {
-//     const row = tbody.insertRow();
-//     // ✅ MAKE THE ENTIRE ROW DRAGGABLE AND ADD INDEX
-//     row.draggable = true;
-//     row.dataset.rowIndex = index;
-
-//     const rowHeaderCell = row.insertCell();
-//     rowHeaderCell.textContent = rGroup.key;
-//     rowHeaderCell.className = "row-header";
-
-//     console.log("row Groups", rowGroups)
-
-//     let rowTotals = {};
-//     // columnGroups.forEach((cGroup) => {
-//     //   const key = `${rGroup.key} - ${cGroup.key}`;
-//     //   const aggregateData = dataMap.get(key);
-//     //   measures.forEach((measure) => {
-//     //     const value = aggregateData ? aggregateData[`sum_${measure.uniqueName}`] : null;
-//     //     const cell = row.insertCell();
-//     //     cell.textContent = formatValue(value, measure.uniqueName);
-//     //     if (value !== null) {
-//     //       rowTotals[measure.uniqueName] = (rowTotals[measure.uniqueName] || 0) + value;
-//     //     }
-//     //   });
-//     // });
-//     // measures.forEach((measure) => {
-//     //   const cell = row.insertCell();
-//     //   cell.className = "grand-total-col";
-//     //   cell.textContent = formatValue(rowTotals[measure.uniqueName], measure.uniqueName);
-//     // });
-
-//     measures.forEach(m => { rowTotals[m.uniqueName] = 0; });
-
-//     columnGroups.forEach((cGroup) => {
-//       const key = `${rGroup.key} - ${cGroup.key}`;
-//       const aggregateData = dataMap.get(key);
-//       measures.forEach((measure) => {
-//         const value = aggregateData ? aggregateData[`sum_${measure.uniqueName}`] : 0;
-//         const cell = row.insertCell();
-//         // ✅ CHANGED: Use the component's formatValue method.
-//         cell.textContent = pivot.formatValue(value, measure.uniqueName);
-//         rowTotals[measure.uniqueName] += value || 0;
-//       });
-//     });
-
-//     measures.forEach((measure) => {
-//       const cell = row.insertCell();
-//       cell.className = "grand-total-col";
-//       // ✅ CHANGED: Use the component's formatValue method.
-//       cell.textContent = pivot.formatValue(rowTotals[measure.uniqueName], measure.uniqueName);
-//     });
-//   });
-
-//   const footerRow = tfoot.insertRow();
-//   footerRow.className = "grand-total-row";
-//   const footerHeader = document.createElement("td");
-//   footerHeader.textContent = "Grand Total";
-//   footerHeader.className = "row-header";
-//   footerRow.appendChild(footerHeader);
-
-//   // columnGroups.forEach((cGroup) => {
-//   //   measures.forEach((measure) => {
-//   //     const colTotal = cGroup.items.reduce((sum, item) => sum + (item[measure.uniqueName] || 0), 0);
-//   //     const cell = footerRow.insertCell();
-//   //     cell.textContent = formatValue(colTotal, measure.uniqueName);
-//   //   });
-//   // });
-//   // measures.forEach(measure => {
-//   //   const grandTotalValue = grandTotals[measure.uniqueName];
-//   //   const cell = footerRow.insertCell();
-//   //   cell.textContent = formatValue(grandTotalValue, measure.uniqueName);
-//   // });
-
-//   columnGroups.forEach((cGroup) => {
-//     measures.forEach((measure) => {
-//       const colTotal = cGroup.items.reduce((sum, item) => sum + (item[measure.uniqueName] || 0), 0);
-//       const cell = footerRow.insertCell();
-//       // ✅ CHANGED: Use the component's formatValue method.
-//       cell.textContent = pivot.formatValue(colTotal, measure.uniqueName);
-//     });
-//   });
-
-//   measures.forEach(measure => {
-//     const grandTotalValue = grandTotals[`sum_${measure.uniqueName}`];
-//     const cell = footerRow.insertCell();
-//     // ✅ CHANGED: Use the component's formatValue method.
-//     cell.textContent = pivot.formatValue(grandTotalValue, measure.uniqueName);
-//   });
-
-//   tableContainer.appendChild(table);
-
-//   // ✅ CALL THE SETUP FUNCTION AFTER THE TABLE IS IN THE DOM
-//   setupDragAndDrop();
-// }
-
 /**
- * Renders the entire pivot table based on the component's state.
+ * Renders the pivot table with collapsible/expandable rows for measures.
  */
 function renderTable(state) {
   if (!state || !state.processedData) {
@@ -251,109 +61,119 @@ function renderTable(state) {
   }
 
   const tableContainer = document.getElementById('myTable');
-  tableContainer.innerHTML = '';
+  tableContainer.innerHTML = ''; // Clear previous table
 
   const {
     rows: rowConfigs,
     columns: colConfigs,
-    measures,
+    selectedMeasures,
     rowGroups,
     columnGroups,
     processedData,
   } = state;
   const grandTotals = processedData.totals;
-  const rowDimension = rowConfigs[0];
-  const colDimension = colConfigs[0];
-
   const dataMap = new Map(state.groups.map(g => [g.key, g.aggregates]));
 
   const table = document.createElement('table');
   table.className = 'pivot-table';
   const thead = table.createTHead();
-  const tbody = table.createTBody();
-  const tfoot = table.createTFoot();
 
-  // Header Row 1 (Column Group Names)
-  const headerRow1 = thead.insertRow();
-  const cornerCell = document.createElement('th');
-  cornerCell.rowSpan = 2;
-  cornerCell.textContent = `${rowDimension.caption} / ${colDimension.caption}`;
-  headerRow1.appendChild(cornerCell);
+  // --- 1. HEADER ROW ---
+  const headerRow = thead.insertRow();
+  // Header for Product Column (now spans 2 columns to align with Product + Measure)
+  const productHeader = headerRow.insertCell();
+  productHeader.textContent = rowConfigs[0]?.caption || 'Product';
+  productHeader.colSpan = 2;
 
   columnGroups.forEach((cGroup, index) => {
     const th = document.createElement('th');
     th.textContent = cGroup.key;
-    th.colSpan = measures.length;
     th.draggable = true;
     th.dataset.columnIndex = index;
-    headerRow1.appendChild(th);
+    headerRow.appendChild(th);
   });
 
-  const grandTotalHeader1 = document.createElement('th');
-  grandTotalHeader1.textContent = 'Grand Total';
-  grandTotalHeader1.colSpan = measures.length;
-  headerRow1.appendChild(grandTotalHeader1);
+  const grandTotalHeader = document.createElement('th');
+  grandTotalHeader.textContent = 'Grand Total';
+  headerRow.appendChild(grandTotalHeader);
 
-  // Header Row 2 (Measure Names)
-  const headerRow2 = thead.insertRow();
-  const addMeasureHeaders = () => {
-    measures.forEach(measure => {
-      const th = document.createElement('th');
-      th.textContent = measure.caption;
-      headerRow2.appendChild(th);
-    });
-  };
-  columnGroups.forEach(addMeasureHeaders);
-  addMeasureHeaders(); // For Grand Total
+  // --- 2. TABLE BODY (with expandable rows) ---
+  rowGroups.forEach((rGroup, rIndex) => {
+    const groupTbody = table.createTBody();
+    groupTbody.dataset.rowIndex = rIndex; // For drag-and-drop
+    groupTbody.draggable = true;
 
-  // Table Body (Data Rows)
-  rowGroups.forEach((rGroup, index) => {
-    const row = tbody.insertRow();
-    row.draggable = true;
-    row.dataset.rowIndex = index;
+    // Check if the current row group is expanded
+    const isExpanded = pivot.isRowExpanded(rGroup.key);
 
-    const rowHeaderCell = row.insertCell();
-    rowHeaderCell.textContent = rGroup.key;
-    rowHeaderCell.className = 'row-header';
+    // Create the main, always-visible, clickable product row
+    const productRow = groupTbody.insertRow();
+    productRow.className = 'product-row';
 
-    let rowTotals = {};
-    measures.forEach(m => {
-      rowTotals[m.uniqueName] = 0;
-    });
+    // The cell with the product name and toggle icon
+    const productCell = productRow.insertCell();
+    productCell.className = 'row-header clickable';
+    productCell.colSpan = 2 + columnGroups.length + 1; // Span all columns
+    productCell.onclick = () => pivot.toggleRowExpansion(rGroup.key);
+
+    // Add expand/collapse icon and product name
+    productCell.innerHTML = `
+      <span class="toggle-icon">${isExpanded ? '▼' : '►'}</span>
+      ${rGroup.key}
+    `;
+
+    // --- Conditionally render the measure rows if expanded ---
+    if (isExpanded) {
+      selectedMeasures.forEach(measure => {
+        const measureRow = groupTbody.insertRow();
+        measureRow.className = 'measure-detail-row';
+
+        // Add an empty cell for alignment under the product name
+        measureRow.insertCell().className = 'indent-cell';
+
+        // Add the measure name cell
+        const measureNameCell = measureRow.insertCell();
+        measureNameCell.textContent = `Sum of ${measure.caption}`;
+        measureNameCell.className = 'measure-header';
+
+        let rowTotal = 0;
+
+        // Data cells for each region
+        columnGroups.forEach(cGroup => {
+          const key = `${rGroup.key} - ${cGroup.key}`;
+          const aggregateData = dataMap.get(key);
+          const value = aggregateData
+            ? aggregateData[`sum_${measure.uniqueName}`]
+            : 0;
+          const cell = measureRow.insertCell();
+          cell.textContent = pivot.formatValue(value, measure.uniqueName);
+          rowTotal += value || 0;
+        });
+
+        // Grand total cell for the measure row
+        const grandTotalCell = measureRow.insertCell();
+        grandTotalCell.textContent = pivot.formatValue(
+          rowTotal,
+          measure.uniqueName
+        );
+        grandTotalCell.className = 'grand-total-col';
+      });
+    }
+  });
+
+  // --- 3. TABLE FOOTER ---
+  const footerTbody = table.createTBody();
+  footerTbody.className = 'grand-total-footer';
+  selectedMeasures.forEach(measure => {
+    const footerRow = footerTbody.insertRow();
+    footerRow.className = 'grand-total-row';
+
+    const headerCell = footerRow.insertCell();
+    headerCell.textContent = `Total Sum of ${measure.caption}`;
+    headerCell.colSpan = 2;
+    headerCell.className = 'row-header';
 
     columnGroups.forEach(cGroup => {
-      const key = `${rGroup.key} - ${cGroup.key}`;
-      const aggregateData = dataMap.get(key);
-      measures.forEach(measure => {
-        const value = aggregateData
-          ? aggregateData[`sum_${measure.uniqueName}`]
-          : 0;
-        const cell = row.insertCell();
-        cell.textContent = pivot.formatValue(value, measure.uniqueName);
-        rowTotals[measure.uniqueName] += value || 0;
-      });
-    });
-
-    measures.forEach(measure => {
-      const cell = row.insertCell();
-      cell.className = 'grand-total-col';
-      cell.textContent = pivot.formatValue(
-        rowTotals[measure.uniqueName],
-        measure.uniqueName
-      );
-    });
-  });
-
-  // Table Footer (Grand Totals)
-  const footerRow = tfoot.insertRow();
-  footerRow.className = 'grand-total-row';
-  const footerHeader = document.createElement('td');
-  footerHeader.textContent = 'Grand Total';
-  footerHeader.className = 'row-header';
-  footerRow.appendChild(footerHeader);
-
-  columnGroups.forEach(cGroup => {
-    measures.forEach(measure => {
       const colTotal = cGroup.items.reduce(
         (sum, item) => sum + (item[measure.uniqueName] || 0),
         0
@@ -361,10 +181,7 @@ function renderTable(state) {
       const cell = footerRow.insertCell();
       cell.textContent = pivot.formatValue(colTotal, measure.uniqueName);
     });
-  });
 
-  measures.forEach(measure => {
-    // ✅ THIS IS THE FIX: Use the direct measure name as the key.
     const grandTotalValue = grandTotals[measure.uniqueName];
     const cell = footerRow.insertCell();
     cell.textContent = pivot.formatValue(grandTotalValue, measure.uniqueName);
@@ -373,10 +190,13 @@ function renderTable(state) {
   tableContainer.appendChild(table);
   setupDragAndDrop();
 }
-//set up drag and drop
+
+/**
+ * Sets up drag and drop functionality for table rows and columns.
+ * Modified to handle dragging entire <tbody> sections for rows.
+ */
 function setupDragAndDrop() {
   // --- DRAG COLUMNS ---
-  // ✅ SELECTS THE DRAGGABLE HEADERS WE CREATED IN renderTable
   const headers = document.querySelectorAll('th[data-column-index]');
   let draggedColumnIndex = null;
 
@@ -384,10 +204,9 @@ function setupDragAndDrop() {
     header.addEventListener('dragstart', e => {
       draggedColumnIndex = parseInt(header.dataset.columnIndex, 10);
       e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', 'column'); // setData is required for Firefox
+      e.dataTransfer.setData('text/plain', 'column');
       setTimeout(() => header.classList.add('dragging'), 0);
     });
-
     header.addEventListener('dragend', () =>
       header.classList.remove('dragging')
     );
@@ -410,19 +229,14 @@ function setupDragAndDrop() {
       header.classList.remove('drag-over');
 
       if (draggedColumnIndex !== null && draggedColumnIndex !== dropIndex) {
-        console.log(
-          `Dragging column from ${draggedColumnIndex} to ${dropIndex}`
-        );
-        // ✅ Assumes 'pivot' is the global variable for your component
         pivot.dragColumn(draggedColumnIndex, dropIndex);
       }
       draggedColumnIndex = null;
     });
   });
 
-  // --- DRAG ROWS ---
-  // ✅ SELECTS THE DRAGGABLE ROWS WE CREATED IN renderTable
-  const rows = document.querySelectorAll('tbody tr[data-row-index]');
+  // --- DRAG ROWS (Now targets entire <tbody> groups) ---
+  const rows = document.querySelectorAll('tbody[data-row-index]');
   let draggedRowIndex = null;
 
   rows.forEach(row => {
@@ -430,11 +244,13 @@ function setupDragAndDrop() {
       draggedRowIndex = parseInt(row.dataset.rowIndex, 10);
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', 'row');
+      // Apply style to the whole group
       setTimeout(() => row.classList.add('dragging'), 0);
     });
 
     row.addEventListener('dragend', () => row.classList.remove('dragging'));
     row.addEventListener('dragover', e => e.preventDefault());
+
     row.addEventListener('dragenter', e => {
       e.preventDefault();
       if (
@@ -451,8 +267,6 @@ function setupDragAndDrop() {
       row.classList.remove('drag-over');
 
       if (draggedRowIndex !== null && draggedRowIndex !== dropIndex) {
-        console.log(`Dragging row from ${draggedRowIndex} to ${dropIndex}`);
-        // ✅ Assumes 'pivot' is the global variable for your component
         pivot.dragRow(draggedRowIndex, dropIndex);
       }
       draggedRowIndex = null;
@@ -563,3 +377,156 @@ document.addEventListener('DOMContentLoaded', () => {
     formatTypeSelect.addEventListener('change', toggleCurrencyInput);
   }
 });
+
+// Export operations
+window.handleExport = function (format) {
+  // Ensure the pivot component is available
+  if (!pivot) {
+    console.error('Pivot component not found. Cannot export.');
+    alert('Export functionality is not ready yet.');
+    return;
+  }
+
+  console.log(`Exporting to ${format}...`);
+
+  // Use a switch statement to call the correct method
+  switch (format) {
+    case 'html':
+      pivot.exportToHTML('pivot-table-export');
+      break;
+    case 'pdf':
+      pivot.exportToPDF('pivot-table-export');
+      break;
+    case 'excel':
+      pivot.exportToExcel('pivot-table-export');
+      break;
+    case 'print':
+      pivot.openPrintDialog();
+      break;
+    default:
+      console.error(`Unknown export format requested: ${format}`);
+  }
+};
+
+function populateFieldsModalStructure() {
+  const rowSelect = document.getElementById('row-dimension-select');
+  const colSelect = document.getElementById('column-dimension-select');
+  const measureContainer = document.getElementById(
+    'measure-checkbox-container'
+  );
+
+  // Populate dropdowns with available dimensions
+  options.dimensions.forEach(dim => {
+    console.log(dim);
+    const option = document.createElement('option');
+    option.value = dim.field;
+    option.textContent = dim.label;
+    rowSelect.appendChild(option.cloneNode(true));
+    colSelect.appendChild(option.cloneNode(true));
+  });
+
+  // Populate container with available measures as checkboxes
+  options.measures.forEach(measure => {
+    const item = document.createElement('div');
+    item.className = 'checkbox-item';
+    item.innerHTML = `
+      <input type="checkbox" id="measure-${measure.uniqueName}" value="${measure.uniqueName}">
+      <label for="measure-${measure.uniqueName}">${measure.caption}</label>
+    `;
+    measureContainer.appendChild(item);
+  });
+}
+
+/**
+ * Opens the Fields modal and populates it with the current pivot table state.
+ */
+window.openFieldsModal = function () {
+  if (!pivot) return;
+  const state = pivot.getState();
+
+  // Set dropdowns to current state
+  document.getElementById('row-dimension-select').value =
+    state.rows[0]?.uniqueName || '';
+  document.getElementById('column-dimension-select').value =
+    state.columns[0]?.uniqueName || '';
+
+  // Get active measure names
+  const activeMeasureNames = new Set(
+    state.selectedMeasures.map(m => m.uniqueName)
+  );
+
+  // Set checkboxes to current state
+  const measureCheckboxes = document.querySelectorAll(
+    '#measure-checkbox-container input[type="checkbox"]'
+  );
+  measureCheckboxes.forEach(checkbox => {
+    checkbox.checked = activeMeasureNames.has(checkbox.value);
+  });
+
+  openModal('modal-fields');
+};
+
+/**
+ * Reads the selections from the Fields modal and reconfigures the pivot table.
+ */
+// in src/main.js
+
+/**
+ * Reads the selections from the Fields modal and reconfigures the pivot table
+ * using the setDimensions and setMeasures methods for better performance.
+ */
+window.applyFieldChanges = function () {
+  if (!pivot) {
+    console.error('Pivot component not ready.');
+    return;
+  }
+
+  // --- 1. Get Selections from the Modal ---
+  const selectedRowName = document.getElementById('row-dimension-select').value;
+  const selectedColName = document.getElementById(
+    'column-dimension-select'
+  ).value;
+
+  // Find the full dimension objects from the original config
+  const selectedRowDim = options.dimensions.find(
+    d => d.uniqueName === selectedRowName
+  );
+  const selectedColDim = options.dimensions.find(
+    d => d.uniqueName === selectedColName
+  );
+
+  // --- 2. Update Dimensions ---
+  // Create the new array of dimensions for rows and columns
+  const newDimensions = [];
+  if (selectedRowDim) {
+    newDimensions.push({ ...selectedRowDim, axis: 'row' });
+  }
+  if (selectedColDim) {
+    newDimensions.push({ ...selectedColDim, axis: 'column' });
+  }
+
+  // Call the public method on the web component
+  pivot.setDimensions(newDimensions);
+
+  // --- 3. Update Measures ---
+  // Find the full measure objects for all checked boxes
+  const selectedMeasures = [];
+  const measureCheckboxes = document.querySelectorAll(
+    '#measure-checkbox-container input[type="checkbox"]:checked'
+  );
+  measureCheckboxes.forEach(checkbox => {
+    const measure = options.measures.find(m => m.uniqueName === checkbox.value);
+    if (measure) {
+      selectedMeasures.push(measure);
+    }
+  });
+
+  // Call the public method on the web component
+  pivot.setMeasures(selectedMeasures);
+
+  // The component will automatically trigger a stateChange event after
+  // setDimensions and setMeasures, so the table will re-render.
+
+  closeModal('modal-fields');
+  setRowColumnGroups();
+};

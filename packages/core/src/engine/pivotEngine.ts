@@ -46,6 +46,7 @@ export class PivotEngine<T extends Record<string, any>> {
       defaultAggregation: config.defaultAggregation || 'sum',
       isResponsive: config.isResponsive ?? true,
     };
+    console.log(config);
 
     this.state = this.initializeState(config);
     this.loadData();
@@ -664,33 +665,162 @@ export class PivotEngine<T extends Record<string, any>> {
    * @public
    */
 
+  // public dragRow(fromIndex: number, toIndex: number) {
+  //   // Prevent invalid indices
+  //   if (
+  //     fromIndex < 0 ||
+  //     toIndex < 0 ||
+  //     fromIndex >= this.state.rowGroups.length ||
+  //     toIndex >= this.state.rowGroups.length
+  //   ) {
+  //     console.warn('Invalid drag indices');
+  //     return;
+  //   }
+
+  //   // Create new data array with reordered items
+  //   const newData = [...this.state.rowGroups];
+  //   const [removed] = newData.splice(fromIndex, 1);
+  //   newData.splice(toIndex, 0, removed);
+  //   // Update state
+  //   this.state.rowGroups = newData;
+  //   // Update row sizes while maintaining references
+  //   const newRowSizes = [...this.state.rowSizes];
+  //   const [removedSize] = newRowSizes.splice(fromIndex, 1);
+  //   newRowSizes.splice(toIndex, 0, removedSize);
+  //   // Update indices
+  //   this.state.rowSizes = newRowSizes.map((size, index) => ({
+  //     ...size,
+  //     index,
+  //   }));
+  //   // If groups exist, update group order
+  //   if (this.state.groups.length > 0) {
+  //     const newGroups = [...this.state.groups];
+  //     const [removedGroup] = newGroups.splice(fromIndex, 1);
+  //     newGroups.splice(toIndex, 0, removedGroup);
+  //     this.state.groups = newGroups;
+  //   }
+  //   // Refresh processed data and aggregates
+  //   this.state.processedData = this.processData(this.state.data);
+  //   this.updateAggregates();
+
+  //   // Emit change event if needed
+  //   if (typeof this.config.onRowDragEnd === 'function') {
+  //     this.config.onRowDragEnd(fromIndex, toIndex, this.state.data);
+  //   }
+  // }
+  // /**
+  //  * Handles dragging a column to a new position.
+  //  * @param {number} fromIndex - The original index of the column.
+  //  * @param {number} toIndex - The new index for the column.
+  //  * @public
+  //  */
+
+  // public dragColumn(fromIndex: number, toIndex: number): void {
+  //   // Validate indices
+  //   if (
+  //     !this.validateDragOperation(
+  //       fromIndex,
+  //       toIndex,
+  //       this.state.columnGroups.length
+  //     )
+  //   ) {
+  //     console.error(
+  //       `Invalid column drag operation: from ${fromIndex} to ${toIndex}`
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     // Create new columns array with reordered items
+  //     const newColumnGroups = [...this.state.columnGroups];
+  //     const [movedColumn] = newColumnGroups.splice(fromIndex, 1);
+  //     newColumnGroups.splice(toIndex, 0, movedColumn);
+
+  //     // Update column groups state
+  //     this.state.columnGroups = newColumnGroups;
+
+  //     // Update column widths if they exist - preserve existing widths by key
+  //     if (
+  //       this.state.columnWidths &&
+  //       Object.keys(this.state.columnWidths).length > 0
+  //     ) {
+  //       const newColumnWidths: Record<string, number> = {};
+
+  //       // Preserve widths based on column keys (keys don't change during reorder)
+  //       newColumnGroups.forEach(columnGroup => {
+  //         const originalWidth = this.state.columnWidths[columnGroup.key];
+  //         if (originalWidth !== undefined) {
+  //           newColumnWidths[columnGroup.key] = originalWidth;
+  //         }
+  //       });
+
+  //       this.state.columnWidths = newColumnWidths;
+  //     }
+
+  //     // Refresh processed data and aggregates
+  //     this.state.processedData = this.processData(this.state.data);
+  //     this.updateAggregates();
+
+  //     // Call callback if provided
+  //     if (typeof this.config.onColumnDragEnd === 'function') {
+  //       // Transform columnGroups to match expected callback signature
+  //       const newColumns = newColumnGroups.map(columnGroup => ({
+  //         uniqueName: columnGroup.key, // or columnGroup.uniqueName if that property exists
+  //         caption: columnGroup.caption, // or columnGroup.title/name depending on your structure
+  //       }));
+
+  //       this.config.onColumnDragEnd(fromIndex, toIndex, newColumns);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error during column drag operation:', error);
+  //   }
+  // }
+
+  // private validateDragOperation(
+  //   fromIndex: number,
+  //   toIndex: number,
+  //   length: number
+  // ): boolean {
+  //   return (
+  //     fromIndex >= 0 &&
+  //     toIndex >= 0 &&
+  //     fromIndex < length &&
+  //     toIndex < length &&
+  //     fromIndex !== toIndex
+  //   );
+  // }
+
   public dragRow(fromIndex: number, toIndex: number) {
     // Prevent invalid indices
     if (
       fromIndex < 0 ||
       toIndex < 0 ||
-      fromIndex >= this.state.rowGroups.length ||
-      toIndex >= this.state.rowGroups.length
+      fromIndex >= this.state.data.length ||
+      toIndex >= this.state.data.length
     ) {
       console.warn('Invalid drag indices');
       return;
     }
 
     // Create new data array with reordered items
-    const newData = [...this.state.rowGroups];
+    const newData = [...this.state.data];
     const [removed] = newData.splice(fromIndex, 1);
     newData.splice(toIndex, 0, removed);
+
     // Update state
-    this.state.rowGroups = newData;
+    this.state.data = newData;
+
     // Update row sizes while maintaining references
     const newRowSizes = [...this.state.rowSizes];
     const [removedSize] = newRowSizes.splice(fromIndex, 1);
     newRowSizes.splice(toIndex, 0, removedSize);
+
     // Update indices
     this.state.rowSizes = newRowSizes.map((size, index) => ({
       ...size,
       index,
     }));
+
     // If groups exist, update group order
     if (this.state.groups.length > 0) {
       const newGroups = [...this.state.groups];
@@ -698,6 +828,7 @@ export class PivotEngine<T extends Record<string, any>> {
       newGroups.splice(toIndex, 0, removedGroup);
       this.state.groups = newGroups;
     }
+
     // Refresh processed data and aggregates
     this.state.processedData = this.processData(this.state.data);
     this.updateAggregates();
@@ -713,15 +844,10 @@ export class PivotEngine<T extends Record<string, any>> {
    * @param {number} toIndex - The new index for the column.
    * @public
    */
-
   public dragColumn(fromIndex: number, toIndex: number): void {
     // Validate indices
     if (
-      !this.validateDragOperation(
-        fromIndex,
-        toIndex,
-        this.state.columnGroups.length
-      )
+      !this.validateDragOperation(fromIndex, toIndex, this.state.columns.length)
     ) {
       console.error(
         `Invalid column drag operation: from ${fromIndex} to ${toIndex}`
@@ -731,44 +857,49 @@ export class PivotEngine<T extends Record<string, any>> {
 
     try {
       // Create new columns array with reordered items
-      const newColumnGroups = [...this.state.columnGroups];
-      const [movedColumn] = newColumnGroups.splice(fromIndex, 1);
-      newColumnGroups.splice(toIndex, 0, movedColumn);
+      const newColumns = [...this.state.columns];
+      const [removed] = newColumns.splice(fromIndex, 1);
+      newColumns.splice(toIndex, 0, removed);
 
-      // Update column groups state
-      this.state.columnGroups = newColumnGroups;
+      // Update column state
+      this.state.columns = newColumns;
 
-      // Update column widths if they exist - preserve existing widths by key
-      if (
-        this.state.columnWidths &&
-        Object.keys(this.state.columnWidths).length > 0
-      ) {
+      // Update column widths if they exist
+      if (Object.keys(this.state.columnWidths).length > 0) {
         const newColumnWidths: Record<string, number> = {};
-
-        // Preserve widths based on column keys (keys don't change during reorder)
-        newColumnGroups.forEach(columnGroup => {
-          const originalWidth = this.state.columnWidths[columnGroup.key];
-          if (originalWidth !== undefined) {
-            newColumnWidths[columnGroup.key] = originalWidth;
+        Object.keys(this.state.columnWidths).forEach((key, index) => {
+          if (index === fromIndex) {
+            newColumnWidths[newColumns[toIndex].uniqueName] =
+              this.state.columnWidths[key];
+          } else if (index === toIndex) {
+            newColumnWidths[newColumns[fromIndex].uniqueName] =
+              this.state.columnWidths[key];
+          } else {
+            newColumnWidths[key] = this.state.columnWidths[key];
           }
         });
-
         this.state.columnWidths = newColumnWidths;
+      }
+
+      // Update column groups if they exist
+      if (this.state.columnGroups.length > 0) {
+        const newColumnGroups = [...this.state.columnGroups];
+        const [removedGroup] = newColumnGroups.splice(fromIndex, 1);
+        newColumnGroups.splice(toIndex, 0, removedGroup);
+        this.state.columnGroups = newColumnGroups;
       }
 
       // Refresh processed data and aggregates
       this.state.processedData = this.processData(this.state.data);
       this.updateAggregates();
 
-      // Call callback if provided
+      // Emit change event if needed
       if (typeof this.config.onColumnDragEnd === 'function') {
-        // Transform columnGroups to match expected callback signature
-        const newColumns = newColumnGroups.map(columnGroup => ({
-          uniqueName: columnGroup.key, // or columnGroup.uniqueName if that property exists
-          caption: columnGroup.caption, // or columnGroup.title/name depending on your structure
+        const columnsWithCaptions = this.state.columns.map(column => ({
+          ...column,
+          caption: column.caption || column.uniqueName,
         }));
-
-        this.config.onColumnDragEnd(fromIndex, toIndex, newColumns);
+        this.config.onColumnDragEnd(fromIndex, toIndex, columnsWithCaptions);
       }
     } catch (error) {
       console.error('Error during column drag operation:', error);
@@ -788,7 +919,6 @@ export class PivotEngine<T extends Record<string, any>> {
       fromIndex !== toIndex
     );
   }
-
   /**
    * Applies filters to the data
    * @param {FilterConfig[]} filters - Array of filter configurations

@@ -27,6 +27,36 @@
     </div>
   </div>
 
+  <!-- ✅ START: New Export Dropdown -->
+  <div class="dropdown-container">
+    <button class="main-button">
+      <span class="icon">📥</span>
+      Export
+    </button>
+    <div class="dropdown-menu">
+      <button class="dropdown-item" onclick="handleExport('html')">
+        <span class="icon">📄</span> Export to HTML
+      </button>
+      <button class="dropdown-item" onclick="handleExport('pdf')">
+        <span class="icon">📜</span> Export to PDF
+      </button>
+      <button class="dropdown-item" onclick="handleExport('excel')">
+        <span class="icon">📊</span> Export to Excel
+      </button>
+      <button class="dropdown-item" onclick="handleExport('print')">
+        <span class="icon">🖨️</span> Print
+      </button>
+    </div>
+  </div>
+  <!-- ✅ END: New Export Dropdown -->
+
+  <div class="toolbar-button-container">
+    <button class="main-button" onclick="openFieldsModal()">
+      <span class="icon">⚙️</span>
+      Fields
+    </button>
+  </div>
+
   <!-- Format Cells Modal -->
   <div id="modal1" class="modal">
     <div class="modal-content">
@@ -130,10 +160,53 @@
     </div>
   </div>
 
+  <div id="modal-fields" class="modal">
+    <div class="modal-content modal-large">
+      <h2>Fields</h2>
+      <p class="modal-subtitle">
+        Select dimensions and measures to build your report.
+      </p>
+
+      <div class="field-config-area">
+        <!-- Column for Rows and Columns configuration -->
+        <div class="field-config-column">
+          <div class="field-config-box">
+            <h3>Rows</h3>
+            <select id="row-dimension-select"></select>
+          </div>
+          <div class="field-config-box">
+            <h3>Columns</h3>
+            <select id="column-dimension-select"></select>
+          </div>
+        </div>
+
+        <!-- Column for Values (Measures) configuration -->
+        <div class="field-config-column">
+          <div class="field-config-box">
+            <h3>Values (Measures)</h3>
+            <div id="measure-checkbox-container">
+              <!-- Checkboxes will be dynamically inserted here -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="apply-btn" onclick="applyFieldChanges()">APPLY</button>
+        <button class="cancel-btn" onclick="closeModal('modal-fields')">
+          CANCEL
+        </button>
+      </div>
+    </div>
+  </div>
+
 
   <div id="myTable">
   </div>
 
+  <table>
+    
+  </table>
   <pivot-head id="pivot"></pivot-head>
   <script type="module" src="/src/main.js"></script>
 </body>
