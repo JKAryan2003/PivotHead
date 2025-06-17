@@ -10,6 +10,7 @@ import type {
   Group,
   PaginationConfig,
 } from '@mindfiredigital/pivothead';
+import { FieldFormat } from '../types/types';
 
 /**
  * Enhanced interface extending PivotEngine with additional methods
@@ -17,6 +18,8 @@ import type {
  */
 interface EnhancedPivotEngine<T extends Record<string, any>>
   extends PivotEngine<T> {
+  state: any;
+  getPagination(): PaginationConfig;
   applyFilters(filters: FilterConfig[]): void;
   setMeasures(measures: MeasureConfig[]): void;
   setDimensions(dimensions: Dimension[]): void;
@@ -128,6 +131,7 @@ export class PivotHeadElement extends HTMLElement {
     // Check if we have the minimum required data
     const hasData = this._data && this._data.length > 0;
     const hasOptions = this._options && Object.keys(this._options).length > 0;
+    console.log('has Data', hasData, 'hasOptions', hasOptions);
     if (!hasData || !hasOptions) {
       return;
     }
@@ -140,6 +144,7 @@ export class PivotHeadElement extends HTMLElement {
         ...this._options,
       };
 
+      console.log('Options', this._options);
       // Create or recreate the engine
       this.engine = new PivotEngine(config) as EnhancedPivotEngine<any>;
 
@@ -168,6 +173,7 @@ export class PivotHeadElement extends HTMLElement {
   private parseAttributesIfNeeded(): void {
     // Parse data attribute
     const rawData = this.getAttribute('data');
+    console.log('rawData', rawData);
     if (rawData && !this._data.length) {
       try {
         this.data = JSON.parse(rawData); // Use setter
@@ -178,6 +184,7 @@ export class PivotHeadElement extends HTMLElement {
 
     // Parse options attribute
     const rawOptions = this.getAttribute('options');
+    console.log('rawOptions', rawOptions);
     if (rawOptions && !Object.keys(this._options).length) {
       try {
         this.options = JSON.parse(rawOptions); // Use setter
@@ -205,7 +212,10 @@ export class PivotHeadElement extends HTMLElement {
     const rawPagination = this.getAttribute('pagination');
     if (rawPagination) {
       try {
-        this.pagination = { ...this._pagination, ...JSON.parse(rawPagination) };
+        this._pagination = {
+          ...this._pagination,
+          ...JSON.parse(rawPagination),
+        };
       } catch (error) {
         console.error('Error parsing pagination attribute:', error);
       }
@@ -258,12 +268,12 @@ export class PivotHeadElement extends HTMLElement {
       case 'pagination':
         if (newValue) {
           try {
-            this.pagination = { ...this._pagination, ...JSON.parse(newValue) };
+            this._pagination = { ...this._pagination, ...JSON.parse(newValue) };
           } catch (error) {
             console.error('Error parsing pagination attribute:', error);
           }
         } else {
-          this.pagination = { currentPage: 1, pageSize: 30, totalPages: 1 };
+          this._pagination = { currentPage: 1, pageSize: 30, totalPages: 1 };
         }
         break;
     }
@@ -292,6 +302,21 @@ export class PivotHeadElement extends HTMLElement {
   // Public API methods for programmatic control
 
   /**
+   * Returns the raw data from the pivot table
+   */
+
+  public getRawData(): any[] {
+    return this._data;
+  }
+
+  /**
+   * Returns the pagination from the engine or local fallback
+   */
+  public getPagination(): PaginationConfig {
+    return this.engine?.getPagination?.() ?? this._pagination;
+  }
+
+  /**
    * Get the current state of the pivot table
    */
   public getState(): PivotTableState<any> {
@@ -300,7 +325,6 @@ export class PivotHeadElement extends HTMLElement {
     }
     return this.engine.getState();
   }
-
   /**
    * Reset the pivot table to its initial state
    */
@@ -411,6 +435,7 @@ export class PivotHeadElement extends HTMLElement {
    */
   public getFilters(): FilterConfig[] {
     return this._filters;
+    return this._filters;
   }
 
   /**
@@ -484,31 +509,6 @@ export class PivotHeadElement extends HTMLElement {
   }
 
   // File loading methods
-
-  /**
-   * Load data from a file
-   */
-  public loadFromFile(file: File): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = event => {
-        try {
-          const result = event.target?.result;
-          if (typeof result === 'string') {
-            const data = JSON.parse(result);
-            this.data = data;
-            resolve();
-          } else {
-            reject(new Error('Failed to read file as text'));
-          }
-        } catch (error) {
-          reject(error);
-        }
-      };
-      reader.onerror = () => reject(new Error('Failed to read file'));
-      reader.readAsText(file);
-    });
-  }
 
   /**
    * Load data from a URL
@@ -690,10 +690,13 @@ export class PivotHeadElement extends HTMLElement {
   }
 
   /**
-   * Sets the formatting for a specific field and re-initializes the engine.
-   * @param {string} field - The uniqueName of the field to format (e.g., 'sales').
-   * @param {object} format - The new format object.
+   * Method to reinitialize the engine
    */
+  private reinitialize(): void {
+    console.log(this._options);
+    this.tryInitializeEngine();
+  }
+
   public setFormatting(field: string, format: any): void {
     if (!this._options.formatting) {
       this._options.formatting = {};
@@ -701,13 +704,6 @@ export class PivotHeadElement extends HTMLElement {
 
     this._options.formatting[field] = format;
     this.reinitialize();
-  }
-
-  /**
-   * Method to reinitialize the engine
-   */
-  private reinitialize(): void {
-    this.tryInitializeEngine();
   }
 }
 
